@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cp -f $S2I_DESTINATION/src/target/*.war /config/apps/
+
+cp -f $S2I_DESTINATION/src/server.xml /config/
