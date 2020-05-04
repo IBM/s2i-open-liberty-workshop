@@ -1,5 +1,6 @@
-FROM open-liberty:microProfile2-java11
-LABEL maintainer="Niklas Heidloff"
+FROM openliberty/open-liberty:microProfile3-ubi-min
+
+LABEL maintainer="Oliver Rodriguez"
 
 ENV BUILDER_VERSION 0.0.1
 
@@ -12,6 +13,16 @@ LABEL io.k8s.description="Open Liberty S2I Image" \
       io.openshift.tags="runner,builder,liberty" \
       io.openshift.s2i.destination="/tmp"
 
+# USER root
+
+# RUN mkdir /home/default
+
+# RUN chown 1001 /home/default
+
+# ENV HOME /home/default
+
+WORKDIR "/tmp"
+
 ENV STI_SCRIPTS_PATH="/usr/local/s2i" \ 
     WORKDIR="/usr/local/workdir" \
     S2I_DESTINATION="/tmp" 
@@ -19,3 +30,9 @@ ENV STI_SCRIPTS_PATH="/usr/local/s2i" \
 COPY ./s2i/bin/ /usr/local/s2i
 
 USER 1001
+
+# Default setting for the verbose option
+# ARG VERBOSE=false
+
+# This script will add the requested XML snippets and grow image to be fit-for-purpose
+# RUN configure.sh

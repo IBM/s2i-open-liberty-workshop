@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd $S2I_DESTINATION/src/
+
+echo "Running maven package..."
+
+mvn package -q

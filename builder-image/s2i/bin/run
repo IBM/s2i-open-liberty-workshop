@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo "This is the Open Liberty Builder image"
+echo "Use this image to build Java based applications."
