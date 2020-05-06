@@ -165,7 +165,7 @@ objects:
         containers:
         - image: authors-runtime:0.1.0
           imagePullPolicy: IfNotPresent
-          name: authors
+          name: authors-runtime
           ports:
           - containerPort: 9080
             name: http
