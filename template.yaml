@@ -59,13 +59,13 @@ objects:
 - apiVersion: v1
   kind: ImageStream
   metadata:
-    name: open-liberty-runtime
+    name: s2i-open-liberty
   spec:
     tags:
     - name: latest
       from:
         kind: DockerImage
-        name: 'odrodrig/s2i-open-liberty:0.1.0'
+        name: odrodrig/s2i-open-liberty:0.1.0
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -74,7 +74,7 @@ objects:
     output:
       to:
         kind: ImageStreamTag
-        name: authors-builder:latest
+        name: authors-builder:0.1.0
     postCommit: {}
     resources: {}
     source:
@@ -90,16 +90,16 @@ objects:
             value: ${OUTPUT_DIR}
         from:
           kind: ImageStreamTag
-          name: odrodrig/s2i-open-liberty-builder:0.1.0
+          name: s2i-open-liberty-builder:0.1.0
         incremental: false
       type: Source
-    # triggers:
+    triggers:
     # - github:
     #     secret: ${GITHUB_WEBHOOK_SECRET}
     #   type: GitHub
-    # - type: ConfigChange
-    # - imageChange: {}
-    #   type: ImageChange
+    - type: ConfigChange
+    - imageChange: {}
+      type: ImageChange
   status:
     lastVersion: 0
 - apiVersion: v1
@@ -120,27 +120,26 @@ objects:
             kind: ImageStreamTag
             name: authors-builder:0.1.0
           paths:
-            - destinationDir: /tmp/src
+            - destinationDir: .
               sourcePath: /tmp/src/
     strategy:
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: odrodrig/s2i-open-liberty:0.1.0
+          name: s2i-open-liberty:0.1.0
         incremental: false
-      type: Source
-    # triggers:
+    triggers:
     # - github:
     #     secret: ${GITHUB_WEBHOOK_SECRET}
     #   type: GitHub
-    # - type: ConfigChange
-    # - type: ImageChange
-    #   imageChange: {}
-    # - type: ImageChange
-    #   imageChange:
-    #     from:
-    #       kind: ImageStreamTag
-    #       name: open-liberty-builder:latest
+    - type: ConfigChange
+    - type: ImageChange
+      imageChange: {}
+    - type: ImageChange
+      imageChange:
+        from:
+          kind: ImageStreamTag
+          name: authors-builder:0.1.0
   status:
     lastVersion: 0
 - apiVersion: v1
@@ -148,7 +147,7 @@ objects:
   metadata:
     labels:
       app: open-liberty-app
-    name: open-liberty-app
+    name: authors
   spec:
     replicas: 1
     revisionHistoryLimit: 2
@@ -164,31 +163,26 @@ objects:
           app: open-liberty-app
       spec:
         containers:
-        - env:
-          - name: KUBERNETES_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          image: authors-runtime:0.1.0
+        - image: authors-runtime:0.1.0
           imagePullPolicy: IfNotPresent
           name: authors
           ports:
-          - containerPort: 8080
+          - containerPort: 9080
             name: http
             protocol: TCP
-      metadata:
-        labels:
-          app: open-liberty-app
-    # triggers:
-    #   - type: ConfigChange
-    #   - type: ImageChange
-    #     imageChangeParams:
-    #       automatic: true
-    #       containerNames:
-    #         - static-web-app-running-on-nginx
-    #       from:
-    #         kind: ImageStreamTag
-    #         name: 'static-web-app-running-on-nginx:latest'
+          metadata:
+            labels:
+              app: open-liberty-app
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - authors-runtime
+          from:
+            kind: ImageStreamTag
+            name: 'authors-runtime:0.1.0'
 - apiVersion: v1
   kind: Service
   metadata:

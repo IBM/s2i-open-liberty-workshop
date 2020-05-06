@@ -29,6 +29,12 @@ ENV STI_SCRIPTS_PATH="/usr/local/s2i" \
 
 COPY ./s2i/bin/ /usr/local/s2i
 
+USER root
+
+RUN chmod +x /usr/local/s2i/assemble && \
+    chmod +x /usr/local/s2i/run && \
+    chmod +x /usr/local/s2i/usage
+
 USER 1001
 
 # Default setting for the verbose option

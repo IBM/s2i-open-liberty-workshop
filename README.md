@@ -6,33 +6,86 @@ This project contains a S2I builder image which creates an image running Java we
 
 The Open Liberty builder can be used in two different environments:
 
-* OpenShift or MiniShift via 'oc new-app' and 'oc start-build'
 * Local Docker runtime via 's2i'
+* Deployment to OpenShift via 'oc new-app'
+
+With interpreted languages like python and javascript, the runtime container is also the build container. For example, with a node.js application the 'npm install' is run to build the application and then 'npm start' is run in the same container in order to start the application.
+
+However, with compiled languages like Java, the build and runtime processes can be separated. This will allow for slimmer runtime containers for faster application starts and less bloat in the application image.
+
+![runtime image flow](./screenshots/runtime-image-flow.png)
+(source: https://github.com/openshift/source-to-image/blob/master/docs/runtime_image.md)
+
+This lab will focus on the second scenario of using a builder image along with a runtime image.
+
+### Structure of this repository
 
 ### Setup
 
+```bash
+git clone https://github.com/odrodrig/s2i-open-liberty
 ```
-$ git clone https://github.com/nheidloff/s2i-open-liberty
-$ cd s2i-open-liberty
-$ ROOT_FOLDER=$(pwd)
+
+```bash
+cd s2i-open-liberty
+```
+
+```bash
+ROOT_FOLDER=$(pwd)
 ```
 
 The following prerequisites are needed:
 
 * [docker](https://www.docker.com/products/docker-desktop)
-* [mvn](https://maven.apache.org/install.html)
 * [s2i](https://github.com/openshift/source-to-image/releases)
-* [minishift](https://github.com/minishift/minishift)
+* [A Docker Hub account](https://hub.docker.com)
 
+### Build the builder image
 
-### Run the sample application via S2I and Docker
+1. Navigate to the builder image directory
+```
+cd ${ROOT_FOLDER}/builder-image
+```
+
+2. Export your docker username as an environment variable.
+```
+export DOCKER_USERNAME="Your docker username"
+```
+
+3. Build the builder image
+```
+docker build -t $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 .
+```
+
+### Build the runtime image
+
+1. Navigate to the runtime image directory
 
 ```
-$ cd ${ROOT_FOLDER}/sample
-$ mvn package
-$ s2i build . nheidloff/s2i-open-liberty authors
-$ docker run -it --rm -p 9080:9080 authors
-$ open http://localhost:9080/openapi/ui/
+cd $ROOT_FOLDER/runtime-image
+```
+
+2. Build the runtime image
+```
+docker build -t $DOCKER_USERNAME/s2i-open-liberty:0.1.0 .
+```
+
+### Use S2I to build the application container
+
+1. Use the builder image and runtime image to build the application image
+
+```
+cd $ROOT_FOLDER/sample
+```
+
+```
+s2i build . $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 authors --runtime-image $DOCKER_USERNAME/s2i-open-liberty:0.1.0 -a /tmp/src/target -a /tmp/src/server.xml
+```
+
+2. Run the newly built application
+
+```
+docker run -it --rm -p 9080:9080 authors
 ```
 
 ### Structure of the web applications
@@ -41,6 +94,13 @@ To use "s2i" or "oc new-app/oc start-build" you need two files:
 
 * [server.xml](https://openliberty.io/docs/ref/config/serverConfiguration.html) in the root directory
 * *.war file in the target directory
+
+
+
+
+## Deployment to Openshift?
+
+
 
 ### Run the sample application on Minishift
 
