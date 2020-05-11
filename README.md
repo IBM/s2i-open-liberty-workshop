@@ -125,42 +125,87 @@ Open up your browser and navigate to [http://localhost:9080/openapi/ui](http://l
 ### Deployment to OpenShift
 Now that we have the application running locally and have verified that it works, let's deploy it to an OpenShift environment.
 
-There are two ways of doing this:
+1. In order to deploy to OpenShift, we need to push our images to your cluster's internal registry. Run the following commands to authenticate with your OpenShift image registry.
+
+```bash
+oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
+
+export HOST=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
+
+docker login -u $(oc whoami) -p $(oc whoami -t) $HOST
+```
+
+1. Now that we are authenticated with our docker registry on OpenShift, let's push the images. The following commands will: get the route to the docker registry and save it, tag our images with the copied route, and finally push the images:
+
+```bash
+oc get routes -n openshift-image-registry
+```
+
+1. For this command, you will need to copy the route from the previous command and place it below:
+
+```bash
+export REGISTRY="Enter route here"
+```
+
+Now we can deploy our application to OpenShift, however, there are two ways of doing that:
 
 - You can manually create a *deployment.yaml* file and reference the newly built container image. Then you could apply the file and create a kubernetes deployment.
 - You can use the `oc new-app` command to create build configs and deployment config.
 
 Both ways are very similar, the main difference being that with build and deployment configs we can set triggers to automatically build the application when a new image tag has been pushed to the internal registry.
 
-For this lab, we will be exploring the second option of using the `oc new-app` command.
 
-1. In order to have our builds run in OpenShift, we need to push our images to your cluster's internal registry. Run the following commands to authenticate with your OpenShift image registry.
+
+#### Method 1: Deploying as a traditional Kubernetes deployment
+For this method, we will deploy our application by creating a kubernetes deployment along with a service and a route.
+
+1. Tag the image that was created in the previous section.
 
 ```bash
-oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
-
-export HOST=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
+docker tag authors $REGISTRY/default/authors:0.1.0
 ```
 
-```
-$ cd ${ROOT_FOLDER}
-$ eval $(minishift docker-env)
-$ oc login -u developer -p developer
-$ oc new-project cloud-native-starter
-$ docker login -u developer -p $(oc whoami -t) $(minishift openshift registry)
-$ docker build -t nheidloff/s2i-open-liberty .
-$ docker tag nheidloff/s2i-open-liberty:latest $(minishift openshift registry)/cloud-native-starter/s2i-open-liberty:latest
-$ docker push $(minishift openshift registry)/cloud-native-starter/s2i-open-liberty
+2. Push the image that we built locally using s2i to the OpenShift image registry.
+
+```bash
+docker push $REGISTRY/default/authors:0.1.0
 ```
 
-After the builder image has been deployed, Open Liberty applications can be deployed:
+3. Apply the `application.yaml` file using the `oc` cli to create our deployment, service, and route.
+
+```bash
 
 ```
-$ cd ${ROOT_FOLDER}/sample
-$ mvn package
-$ oc new-app s2i-open-liberty:latest~/. --name=authors
-$ oc start-build --from-dir . authors 
-$ oc expose svc/authors
-$ open http://authors-cloud-native-starter.$(minishift ip).nip.io/openapi/ui/
-$ curl -X GET "http://authors-cloud-native-starter.$(minishift ip).nip.io/api/v1/getauthor?name=Niklas%20Heidloff" -H "accept: application/json"
+
+
+
+#### Method 2: Deploying via oc new-app and deployment configs
+For this lab, we will be exploring the second option of using the `oc new-app` command.
+
+1. Tag the images for OpenShift registry.
+
+```bash
+docker tag $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 $REGISTRY/default/s2i-open-liberty-builders:0.1.0
+
+docker tag $DOCKER_USERNAME/s2i-open-liberty:0.1.0 $REGISTRY/default/s2i-open-liberty:0.1.0
+```
+
+1. Push the images to the registry.
+
+```bash
+docker push $REGISTRY/default/s2i-open-liberty-builder:0.1.0
+
+docker push $REGISTRY/default/s2i-open-liberty:0.1.0
+```
+
+1. We are almost ready to deploy our application but first we need to create an application template that contains all the components of our application. The template that we are applying here will create 2 build configs (builder and runtime iamges), a deploymentConfig to manage our application pods, a service, and a route.
+
+```bash
+oc apply -f template.yaml
+```
+
+1. Lastly, we can use the `oc` cli to deploy the application while using the template that was just applied.
+
+```bash
+oc new-app --template open-liberty-app -p SOURCE_REPOSITORY_URL=https://github.com/odrodrig/s2i-open-liberty
 ```
