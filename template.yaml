@@ -31,8 +31,8 @@ parameters:
     required: false
   - name: GITHUB_WEBHOOK_SECRET
     description: A secret string used to configure the GitHub webhook.
-    displayName: GitHub Webhook Secret
-    value: webhook-secret
+    displayName: webhook
+    value: webhook
 objects:
 - apiVersion: v1
   kind: ImageStream
@@ -94,7 +94,7 @@ objects:
     triggers:
     - github:
         secretReference:
-          name: GITHUB_WEBHOOK_SECRET
+          name: "webhook"
       type: GitHub
     - type: ConfigChange
     - imageChange: {}
@@ -130,7 +130,7 @@ objects:
     triggers:
     - github:
         secretReference:
-          name: GITHUB_WEBHOOK_SECRET
+          name: "webhook"
       type: GitHub
     - type: ConfigChange
     - type: ImageChange
