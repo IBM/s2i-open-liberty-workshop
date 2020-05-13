@@ -31,8 +31,11 @@ parameters:
     required: false
   - name: GITHUB_WEBHOOK_SECRET
     description: A secret string used to configure the GitHub webhook.
-    displayName: webhook
-    value: webhook
+    displayName: GitHub Webhook Secret
+    required: true
+    from: '[a-zA-Z0-9]{10}'
+    generate: expression
+message: "... The GitHub webhook secret is ${GITHUB_WEBHOOK_SECRET} ..."
 objects:
 - apiVersion: v1
   kind: ImageStream
@@ -93,8 +96,7 @@ objects:
       type: Source
     triggers:
     - github:
-        secretReference:
-          name: "webhook"
+        secret: ${GITHUB_WEBHOOK_SECRET}
       type: GitHub
     - type: ConfigChange
     - imageChange: {}
@@ -129,8 +131,7 @@ objects:
         incremental: false
     triggers:
     - github:
-        secretReference:
-          name: "webhook"
+        secret: ${GITHUB_WEBHOOK_SECRET}
       type: GitHub
     - type: ConfigChange
     - type: ImageChange
