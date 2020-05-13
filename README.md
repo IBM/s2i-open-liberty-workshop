@@ -7,7 +7,7 @@ This project contains a S2I builder image and a S2I runtime image which creates 
 The Open Liberty builder can be used in two different environments:
 
 * Local Docker runtime via 's2i'
-* Deployment to OpenShift via 'oc new-app'
+* Deployment to OpenShift'
 
 With interpreted languages like python and javascript, the runtime container is also the build container. For example, with a node.js application the 'npm install' is run to build the application and then 'npm start' is run in the same container in order to start the application.
 
@@ -130,33 +130,19 @@ Now that we have the application running locally and have verified that it works
 ```bash
 oc patch configs.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
 
-export HOST=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
+export REGISTRY=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
 
-docker login -u $(oc whoami) -p $(oc whoami -t) $HOST
+docker login -u $(oc whoami) -p $(oc whoami -t) $REGISTRY
 ```
 
-1. Now that we are authenticated with our docker registry on OpenShift, let's push the images. The following commands will: get the route to the docker registry and save it, tag our images with the copied route, and finally push the images:
+1. Now that we are authenticated with our docker registry on OpenShift, let's push the images.
 
-```bash
-oc get routes -n openshift-image-registry
-```
-
-1. For this command, you will need to copy the route from the previous command and place it below:
-
-```bash
-export REGISTRY="Enter route here"
-```
-
-Now we can deploy our application to OpenShift, however, there are two ways of doing that:
-
-- You can manually create a *deployment.yaml* file and reference the newly built container image. Then you could apply the file and create a kubernetes deployment.
-- You can use the `oc new-app` command to create build configs and deployment config.
+Now we can deploy our application to OpenShift. In this lab we will be focusing on two deployment strategies: manually deploying as a traditional Kubernetes deployment and automatic build and deployment using OpenShift build configs and deployment configs.
 
 Both ways are very similar, the main difference being that with build and deployment configs we can set triggers to automatically build the application when a new image tag has been pushed to the internal registry.
 
+#### Deploying as a traditional Kubernetes deployment
 
-
-#### Method 1: Deploying as a traditional Kubernetes deployment
 For this method, we will deploy our application by creating a kubernetes deployment along with a service and a route.
 
 1. Tag the image that was created in the previous section.
@@ -174,18 +160,37 @@ docker push $REGISTRY/default/authors:0.1.0
 3. Apply the `application.yaml` file using the `oc` cli to create our deployment, service, and route.
 
 ```bash
-
+oc apply -f application.yaml
 ```
 
+1. Now let's visit the deployed application. Run the following to get the route to access the application.
 
+```bash
+oc get routes -l app=authors -o go-template='{{range .items}}{{.spec.host}}{{end}}'
+```
 
-#### Method 2: Deploying via oc new-app and deployment configs
-For this lab, we will be exploring the second option of using the `oc new-app` command.
+1. Copy and paste the output of the previous command into your web browser and add the following to the end of the route:
+
+```bash
+/openapi/ui
+```
+
+So your route should appear like the following but without the (...):
+
+```bash
+authors-route-default...appdomain.cloud/openapi/ui
+```
+
+You should now see the OpenAPI documentation for the getAuthor endpoint of your microservice.
+
+#### Automating deployment with build and deployment configs
+
+For this section, we will be exploring how to automate our application build and deploy using OpenShift concepts known as build configs and deploy configs. With build configs, the s2i builds are actually happening on the cluster rather than locally.
 
 1. Tag the images for OpenShift registry.
 
 ```bash
-docker tag $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 $REGISTRY/default/s2i-open-liberty-builders:0.1.0
+docker tag $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 $REGISTRY/default/s2i-open-liberty-builder:0.1.0
 
 docker tag $DOCKER_USERNAME/s2i-open-liberty:0.1.0 $REGISTRY/default/s2i-open-liberty:0.1.0
 ```
@@ -209,3 +214,12 @@ oc apply -f template.yaml
 ```bash
 oc new-app --template open-liberty-app -p SOURCE_REPOSITORY_URL=https://github.com/odrodrig/s2i-open-liberty
 ```
+
+After running the command you may see a message that says `Failed` however this is because the build has not yet completed. If you log into your OpenShift console and navigate to `Builds` > `Build Configs` you should see your builds running. 
+
+1. Once those builds complete a replication controller will be created that manages the application pods. Navigate to `Workloads` > `Pods` and look for your new pod. It should start with `authors-2`.
+
+1. Once you have verified that the new pod is running, navigate to `Networking` > `Routes` and click on the `open-liberty-app` route to visit your running application.
+
+## Conclusion
+In this lab we have explored building our own custom s2i images for building containerized application from source code. We utilized a multi stage s2i process that separated the build environment from the runtime environment which allowed for us to have a slimmer application image. Then, we deployed the application as a traditional Kubernetes deployment. Lastly, we explored how to automate the building and deploying of the application using OpenShift build and deployment configs.

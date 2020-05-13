@@ -40,5 +40,4 @@ USER 1001
 # Default setting for the verbose option
 # ARG VERBOSE=false
 
-# This script will add the requested XML snippets and grow image to be fit-for-purpose
-# RUN configure.sh
+CMD ["/usr/local/s2i/run"]

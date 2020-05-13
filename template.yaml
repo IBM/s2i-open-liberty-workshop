@@ -29,12 +29,10 @@ parameters:
     displayName: Output Directory
     value: /tmp/src/
     required: false
-  # - name: GITHUB_WEBHOOK_SECRET
-  #   description: A secret string used to configure the GitHub webhook.
-  #   displayName: GitHub Webhook Secret
-  #   required: true
-  #   from: '[a-zA-Z0-9]{40}'
-  #   generate: expression
+  - name: GITHUB_WEBHOOK_SECRET
+    description: A secret string used to configure the GitHub webhook.
+    displayName: GitHub Webhook Secret
+    value: webhook-secret
 objects:
 - apiVersion: v1
   kind: ImageStream
@@ -94,9 +92,10 @@ objects:
         incremental: false
       type: Source
     triggers:
-    # - github:
-    #     secret: ${GITHUB_WEBHOOK_SECRET}
-    #   type: GitHub
+    - github:
+        secretReference:
+          name: GITHUB_WEBHOOK_SECRET
+      type: GitHub
     - type: ConfigChange
     - imageChange: {}
       type: ImageChange
@@ -129,9 +128,10 @@ objects:
           name: s2i-open-liberty:0.1.0
         incremental: false
     triggers:
-    # - github:
-    #     secret: ${GITHUB_WEBHOOK_SECRET}
-    #   type: GitHub
+    - github:
+        secretReference:
+          name: GITHUB_WEBHOOK_SECRET
+      type: GitHub
     - type: ConfigChange
     - type: ImageChange
       imageChange: {}
@@ -147,7 +147,7 @@ objects:
   metadata:
     labels:
       app: open-liberty-app
-    name: authors
+    name: authors-2
   spec:
     replicas: 1
     revisionHistoryLimit: 2
