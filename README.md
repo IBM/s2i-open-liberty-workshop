@@ -181,11 +181,13 @@ So your route should appear like the following but without the (...):
 authors-route-default...appdomain.cloud/openapi/ui
 ```
 
+It sometimes takes a minute to fully deploy so if you get a message about the application not being available, try again.
+
 You should now see the OpenAPI documentation for the getAuthor endpoint of your microservice.
 
 #### Automating deployment with build and deployment configs
 
-For this section, we will be exploring how to automate our application build and deploy using OpenShift concepts known as build configs and deploy configs. With build configs, the s2i builds are actually happening on the cluster rather than locally.
+For this section, we will be exploring how to automate our application build and deploy using OpenShift concepts known as build configs and deployment configs. With build configs, the s2i builds are actually happening on the cluster rather than locally.
 
 1. Tag the images for OpenShift registry.
 
@@ -203,7 +205,7 @@ docker push $REGISTRY/default/s2i-open-liberty-builder:0.1.0
 docker push $REGISTRY/default/s2i-open-liberty:0.1.0
 ```
 
-1. We are almost ready to deploy our application but first we need to create an application template that contains all the components of our application. The template that we are applying here will create 2 build configs (builder and runtime iamges), a deploymentConfig to manage our application pods, a service, and a route.
+1. We are almost ready to deploy our application but first we need to create an application template that contains all the components of our application. The template that we are applying here will create 2 build configs (builder and runtime images), a deploymentConfig to manage our application pods, a service, and a route.
 
 ```bash
 oc apply -f template.yaml
@@ -220,6 +222,20 @@ After running the command you may see a message that says `Failed` however this 
 1. Once those builds complete a replication controller will be created that manages the application pods. Navigate to `Workloads` > `Pods` and look for your new pod. It should start with `authors-2`.
 
 1. Once you have verified that the new pod is running, navigate to `Networking` > `Routes` and click on the `open-liberty-app` route to visit your running application.
+
+### Optional: Configure a GitHub Webhook for automating builds
+
+In this optional section we will explore the option of configuring a webhook that will automatically notify OpenShift of a git push and will kick off the build and deploy process.
+
+1. Clone the repo
+1. Add repo to template file
+1. Uncomment lines in template
+1. run delete script
+1. run new app command again
+1. Copy the secret that is output after the new app command
+1. Go to git repo and create webhook using the format from docs with the secret copied earlier
+1. Push a change
+1. View builds on OpenShift
 
 ## Conclusion
 In this lab we have explored building our own custom s2i images for building containerized application from source code. We utilized a multi stage s2i process that separated the build environment from the runtime environment which allowed for us to have a slimmer application image. Then, we deployed the application as a traditional Kubernetes deployment. Lastly, we explored how to automate the building and deploying of the application using OpenShift build and deployment configs.
