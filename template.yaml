@@ -14,6 +14,11 @@ parameters:
     displayName: Source URL
     value: "https://github.com/odrodrig/s2i-open-liberty"
     required: true
+  - name: APP_NAME
+    description: The name of the application that you would like to build.
+    displayName: App name
+    value: "authors2"
+    required: true
   - name: SOURCE_REPOSITORY_REF
     description: The branch name for the application
     displayName: Source Branch
@@ -147,13 +152,13 @@ objects:
   kind: DeploymentConfig
   metadata:
     labels:
-      app: open-liberty-app
-    name: authors-2
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     replicas: 1
     revisionHistoryLimit: 2
     selector:
-      app: open-liberty-app
+      app: ${APP_NAME}
     strategy:
       rollingParams:
         timeoutSeconds: 3600
@@ -161,7 +166,7 @@ objects:
     template:
       metadata:
         labels:
-          app: open-liberty-app
+          app: ${APP_NAME}
       spec:
         containers:
         - image: authors-runtime:0.1.0
@@ -173,7 +178,7 @@ objects:
             protocol: TCP
           metadata:
             labels:
-              app: open-liberty-app
+              app: ${APP_NAME}
     triggers:
       - type: ConfigChange
       - type: ImageChange
@@ -188,23 +193,23 @@ objects:
   kind: Service
   metadata:
     labels:
-      app: open-liberty-app
-    name: open-liberty-app
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     ports:
     - name: http
       port: 9080
     selector:
-      app: open-liberty-app
+      app: ${APP_NAME}
 - apiVersion: v1
   kind: Route
   metadata:
     labels:
-      app: open-liberty-app
-    name: open-liberty-app
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     port:
       targetPort: 9080
     to:
       kind: Service
-      name: open-liberty-app
+      name: ${APP_NAME}

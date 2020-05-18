@@ -110,9 +110,9 @@ s2i build . $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 authors --runtime-im
 Let's break down the above command:
  - s2i build . - Use s2i to build the current directory
  - $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 - This is the image used to build the application
- - authors - name of our deployed application
+ - authors - name of our application image
  - --runtime-image $DOCKER_USERNAME/s2i-open-liberty:0.1.0 - Take the output of the builder image and run it in this container.
- - -a /tmp/src/target -a /tmp/src/server.xml - This is where the builder output is located
+ - -a /tmp/src/target -a /tmp/src/server.xml - This is where the builder output is located. These files will be passed into the runtime image.
 
 2. Run the newly built application
 
@@ -135,9 +135,7 @@ export REGISTRY=$(oc get route default-route -n openshift-image-registry --templ
 docker login -u $(oc whoami) -p $(oc whoami -t) $REGISTRY
 ```
 
-1. Now that we are authenticated with our docker registry on OpenShift, let's push the images.
-
-Now we can deploy our application to OpenShift. In this lab we will be focusing on two deployment strategies: manually deploying as a traditional Kubernetes deployment and automatic build and deployment using OpenShift build configs and deployment configs.
+In this lab we will be focusing on two deployment strategies: manually deploying as a traditional Kubernetes deployment and automatic build and deployment using OpenShift build configs and deployment configs.
 
 Both ways are very similar, the main difference being that with build and deployment configs we can set triggers to automatically build the application when a new image tag has been pushed to the internal registry.
 
@@ -189,7 +187,7 @@ You should now see the OpenAPI documentation for the getAuthor endpoint of your 
 
 For this section, we will be exploring how to automate our application build and deploy using OpenShift concepts known as build configs and deployment configs. With build configs, the s2i builds are actually happening on the cluster rather than locally.
 
-1. Tag the images for OpenShift registry.
+1. Tag our builder and runtime images for OpenShift registry.
 
 ```bash
 docker tag $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 $REGISTRY/default/s2i-open-liberty-builder:0.1.0
@@ -214,10 +212,10 @@ oc apply -f template.yaml
 1. Lastly, we can use the `oc` cli to deploy the application while using the template that was just applied.
 
 ```bash
-oc new-app --template open-liberty-app -p SOURCE_REPOSITORY_URL=https://github.com/odrodrig/s2i-open-liberty
+oc new-app --template open-liberty-app
 ```
 
-After running the command you may see a message that says `Failed` however this is because the build has not yet completed. If you log into your OpenShift console and navigate to `Builds` > `Build Configs` you should see your builds running. 
+After running the command you may see a message that says `Failed` however this is because the build has not yet completed. If you log into your OpenShift console and navigate to `Builds` > `Builds` you should see your builds running.
 
 1. Once those builds complete a replication controller will be created that manages the application pods. Navigate to `Workloads` > `Pods` and look for your new pod. It should start with `authors-2`.
 
@@ -227,15 +225,118 @@ After running the command you may see a message that says `Failed` however this 
 
 In this optional section we will explore the option of configuring a webhook that will automatically notify OpenShift of a git push and will kick off the build and deploy process.
 
-1. Clone the repo
-1. Add repo to template file
-1. Uncomment lines in template
-1. run delete script
-1. run new app command again
-1. Copy the secret that is output after the new app command
-1. Go to git repo and create webhook using the format from docs with the secret copied earlier
-1. Push a change
-1. View builds on OpenShift
+1. First we need to create your own version of the code repo by creating a fork. This will copy the repo into your GitHub account. Navigate to the lab repo at https://github.com/odrodrig/s2i-open-liberty and click on the **Fork** button in the upper right of the page.
+
+1. When the repo is done forking, click on the green **Clone or download** button and copy your git repo url.
+
+1. Then, in your terminal, navigate to a directory where you'd like to clone your repo locally and run the following command while substituting **repo_url** with the url you copied in the previous step:
+
+```bash
+git clone repo_url
+cd s2i-open-liberty
+```
+
+1. First let's delete the application that we deployed earlier. Run the following script:
+
+```bash
+./delete.sh
+```
+
+1. Then run the following command to redeploy the application, this time we will specify to point to your newly created repo. Replace **\<repo url\>** with the url to the GitHub repo that you copied earlier.
+
+```bash
+oc new-app --template open-liberty-app -p SOURCE_REPOSITORY_URL=<repo url> -p APP_NAME=authors-3
+```
+
+<!-- 1. Next, open up the **template.yaml** file in the code editor of your choice.
+
+1. In this file we will be changing references to my repo and point to your new repo instead. Look for the *Parameters* section near the beginning of the file and find the **SOURCE_REPOSITORY_URL**. It should look like this:
+
+Change the *value* field to the url of your new git repo that you copied earlier.
+
+1. Now we need to update the template on OpenShift with the changes we just made. Run the following command to delete the old artifacts on OpenShift and apply the new template. -->
+
+1. Now you should see some output of the components that have been created as well as a section labled **With parameters:**
+
+```bash
+     * With parameters:
+        * Source URL=https://github.com/odrodrig/s2i-open-liberty.git
+        * App name=authors-3
+        * Source Branch=master
+        * Source Directory=/sample
+        * Output Directory=/tmp/src/
+        * GitHub Webhook Secret=xxxxxxxx # generated
+```
+
+1. Copy the GitHub Webhook Secret into a text document and save it for later.
+1. In your terminal run the following command to get the webhook endpoint:
+
+```bash
+oc describe bc open-liberty-builder
+```
+
+Look for the section labeled **Webhook GitHub**. It should look like the example below.
+
+```bash
+Webhook GitHub:
+	URL:	https://c107-e.us-south.containers.cloud.ibm.com:31689/apis/build.openshift.io/v1/namespaces/default/buildconfigs/open-liberty-builder/webhooks/<secret>/github
+```
+
+Replace the **\<secret\>** portion from the url copied in the previous step with the secret you copied earlier.
+
+1. Then, in your browser, navigate to your git repo and find the **Settings** tab.
+
+1. From the project settings select **Webhooks** on the left side of the page and click on *new webhook*.
+
+1. In the *payload url* field, enter the webhook url that you copied earlier with the included secret.
+
+1. For the *content type*, select *application/json*
+
+1. Then, click **Add webhook**
+
+You should now see a webhook listed in the project settings. Ensure that the webhook has a green checkmark next to it. If there is a red X, try creating the webhook again.
+
+1. Now that the webhook is configured, let's push a change and test it out. From your code editor of choice, navigate to the repo that you cloned and open `sample/src/main/java/com/ibm/authors/GetAuthor.java`
+
+1. On lines 56-59 edit the name, twitter, and blog to your own information or fake information if you'd like.
+
+```java
+Author author = new Author();
+    author.name = "Oliver Rodriguez";
+    author.twitter = "https://twitter.com/heres__ollie";
+    author.blog = "http://developer.ibm.com";
+```
+
+1. Save the file.
+1. From your terminal and within your cloned repo run the following
+
+```bash
+git add .
+git commit -m "Changed author info"
+git push
+```
+
+With the changes pushed, we can now go to the OpenShift dashboard and view the builds that have been kicked by the GitHub webhook.
+
+1. In your browser, go back into your OpenShift console and navigate to `Builds` > `Builds` and you should see your builds running.
+
+1. After the builds are completed, navigate to `Workloads` > `Pods` and look for your new pod. It should start with `authors-3`.
+
+1. Once you have verified that the new pod is running, navigate to `Networking` > `Routes` and click on the `authors-3` route to visit your running application.
+
+1. To test out the change we made add the following to the end of your application route:
+
+```bash
+/openapi/ui
+```
+
+This will take you to the open API documentation of your app.
+
+1. Click on the rectangle labeled **GET** to expand the api endpoint and then click on **Try it out** on the right side.
+
+1. Enter the name you changed in the `GetAuthor.java` file and click on **Execute**.
+
+You should then see the info that you edited in the file earlier.
 
 ## Conclusion
 In this lab we have explored building our own custom s2i images for building containerized application from source code. We utilized a multi stage s2i process that separated the build environment from the runtime environment which allowed for us to have a slimmer application image. Then, we deployed the application as a traditional Kubernetes deployment. Lastly, we explored how to automate the building and deploying of the application using OpenShift build and deployment configs.
