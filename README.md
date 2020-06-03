@@ -35,11 +35,12 @@ The following prerequisites are needed:
 1. Clone this repository locally and navigate to the newly cloned directory.
 
 ```bash
+cd home
 git clone https://github.com/odrodrig/s2i-open-liberty
 cd s2i-open-liberty
 ```
 
-1.  To make things easier, we are going to set some environment variables that we can reuse in later commands.
+1. To make things easier, we are going to set some environment variables that we can reuse in later commands.
 
 **Note**: Replace *Your Username* with your actual docker hub username. If you do not have one, go [here](https://hub.docker.com) to create one.
 
@@ -48,12 +49,12 @@ export ROOT_FOLDER=$(pwd)
 export DOCKER_USERNAME=<your-docker-username>
 ```
 
-1. Log in with your OpenShift Cluster. 
-   
+1. Log in with your OpenShift Cluster.
+  
    1. Open your `OpenShift web console` and from the profile dropdown `Copy Login Command`.
    1. Paste the login command to login, e.g.
 
-    ```
+    ```bash
     oc login --token=<login-token> --server=https://<cluster-subdomain>:<service-port>
     ```
 
@@ -63,17 +64,19 @@ In this section we will create the first of our two S2I images. This image will 
 
 1. Navigate to the builder image directory
 
-```
+```bash
 cd ${ROOT_FOLDER}/builder-image
 ```
 
 1. Review the ./Dockerfile
 
-```
+```bash
 cat Dockerfile
 ```
-    - The image uses a Redhat certified Universal Base Image (UBI) from the public container registry at Redhat,
-    ```
+
+* The image uses a Redhat certified Universal Base Image (UBI) from the public container registry at Redhat,
+
+    ```bash
     FROM registry.access.redhat.com/ubi8/ubi:8.1
     ```
 
@@ -92,6 +95,7 @@ docker build -t $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 .
 1. Push the builder image out to Docker hub.
 
 ```bash
+docker login
 docker push $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0
 ```
 
@@ -134,7 +138,7 @@ In this section, we will use S2I to build our application container image and th
 1. Use the builder image and runtime image to build the application image
 
 ```
-cd $ROOT_FOLDER/sample
+cd $ROOT_FOLDER/web-app
 ```
 
 1. Run a multistage S2I build, to build the application.
@@ -276,17 +280,17 @@ docker push $REGISTRY/default/s2i-open-liberty:0.1.0
 1. We are almost ready to deploy our application but first we need to create an application template that contains all the components of our application. See [Using Templates](https://docs.openshift.com/container-platform/4.3/openshift_images/using-templates.html).
 1. Review the `template.yaml` file, which contains the BuildConfig object and the DeploymentConfig object as well as the other application objects,
 
-```
+```bash
 cat template.yaml
 ```
 
 1. The template file that we will apply, creates the following Kubernetes objects:
-    - Template,
-    - 4 ImageStream objects: authors-builder, authors-runtime, s2i-open-liberty-builder, s2i-open-liberty
-    - 2 BuildConfig objects: the `open-liberty-builder` produces a `authors-builder:0.1.0` from `s2i-open-liberty-builder:0.1.0`; and the `open-liberty-app` produces an `authors-runtime:0.1.0` from `s2i-open-liberty:0.1.0`. The former build config is for the builder image and the latter is for the runtime image.
-    - DeploymentConfig for `authors-runtime:0.1.0` to manage the application Pods and ReplicaSet, 
-    - Service, and 
-    - Route.
+    * Template,
+    * 4 ImageStream objects: authors-builder, authors-runtime, s2i-open-liberty-builder, s2i-open-liberty
+    * 2 BuildConfig objects: the `open-liberty-builder` produces a `authors-builder:0.1.0` from `s2i-open-liberty-builder:0.1.0`; and the `open-liberty-app` produces an `authors-runtime:0.1.0` from `s2i-open-liberty:0.1.0`. The former build config is for the builder image and the latter is for the runtime image.
+    * DeploymentConfig for `authors-runtime:0.1.0` to manage the application Pods and ReplicationController,
+    * Service, and
+    * Route.
 
 ```bash
 oc apply -f template.yaml
@@ -295,7 +299,7 @@ oc apply -f template.yaml
 1. Lastly, we can use the `oc` cli to deploy the application while using the template that was just created.
 
 ```bash
-oc new-app --template open-liberty-app
+oc new-app --template open-liberty-app -p DOCKER_USERNAME=$DOCKER_USERNAME
 ```
 
 After running the command you may see a message that says `Failed` however this is because the build has not yet completed. 
@@ -342,18 +346,25 @@ authors-deployment-5df596c88f-7vcgb   1/1     Running     0          56m
 open-liberty-builder-1-build          0/1     Completed   0          25m
 ```
 
-1. Once you have verified that the new pod is running, navigate to `Networking` > `Routes` and click on the `open-liberty-app` route to visit your running application.
+1. Once you have verified that the new pod is running, enter the following command to view the application routes.
 
 ```
 oc get routes
+
 NAME    HOST/PORT    PATH    SERVICES    PORT    TERMINATION    WILDCARD
 authors-route    authors-route-default.your-roks-43-1n-cl-2bef1f4b4097001da9502000c44fc2b2-0000.us-south.containers.appdomain.cloud    authors-service    http    None
 authors2    authors2-default.your-roks-43-1n-cl-2bef1f4b4097001da9502000c44fc2b2-0000.us-south.containers.appdomain.cloud    authors2    9080    None
 ```
 
-1. Use the route named `authors-route` and append `/openapi/ui` after the `HOST/PORT` value to open the UI, or append `/api/v1/getauthor` to set the API_URL,
+1. Use the route named `authors2` and append `/openapi/ui` after the `HOST/PORT` value to open the UI, or append `/api/v1/getauthor` to set the API_URL. View the sample below, however, you will have a different route.
 
+```bash
+export API_URL=authors2-default.osgdcw01-0e3e0ef4c9c6d831e8aa6fe01f33bfc4-0000.sjc04.containers.appdomain.cloud
 ```
+
+Then test your application with the command below:
+
+```bash
 curl -X GET "http://$API_URL/api/v1/getauthor" -H "accept: application/json"
 ```
 
@@ -381,7 +392,7 @@ cd s2i-open-liberty
 1. Then run the following command to redeploy the application, this time we will specify to point to your newly created repo. Replace **\<repo url\>** with the url to the GitHub repo that you copied earlier.
 
 ```bash
-oc new-app --template open-liberty-app -p SOURCE_REPOSITORY_URL=<repo url> -p APP_NAME=authors-3
+oc new-app --template open-liberty-app -p SOURCE_REPOSITORY_URL=<repo url> -p APP_NAME=authors-3 -p DOCKER_USERNAME=$DOCKER_USERNAME
 ```
 
 <!-- 1. Next, open up the **template.yaml** file in the code editor of your choice.
@@ -399,7 +410,7 @@ Change the *value* field to the url of your new git repo that you copied earlier
         * Source URL=https://github.com/odrodrig/s2i-open-liberty.git
         * App name=authors-3
         * Source Branch=master
-        * Source Directory=/sample
+        * Source Directory=/web-app
         * Output Directory=/tmp/src/
         * GitHub Webhook Secret=xxxxxxxx # generated
 ```
@@ -432,7 +443,7 @@ Replace the **\<secret\>** portion from the url copied in the previous step with
 
 You should now see a webhook listed in the project settings. Ensure that the webhook has a green checkmark next to it. If there is a red X, try creating the webhook again.
 
-1. Now that the webhook is configured, let's push a change and test it out. From your code editor of choice, navigate to the repo that you cloned and open `sample/src/main/java/com/ibm/authors/GetAuthor.java`
+1. Now that the webhook is configured, let's push a change and test it out. From your code editor of choice, navigate to the repo that you cloned and open `web-app/src/main/java/com/ibm/authors/GetAuthor.java`
 
 1. On lines 56-59 edit the name, twitter, and blog to your own information or fake information if you'd like.
 
@@ -444,7 +455,12 @@ Author author = new Author();
 ```
 
 1. Save the file.
-1. From your terminal and within your cloned repo run the following
+1. From your terminal and within your cloned repo run the following commands after replacing the email address and name with your own information. This is the email address used to sign into github.
+
+```bash
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
+```
 
 ```bash
 git add .
@@ -458,8 +474,28 @@ With the changes pushed, we can now go to the OpenShift dashboard and view the b
 
 1. After the builds are completed, navigate to `Workloads` > `Pods` and look for your new pod. It should start with `authors-3`.
 
-1. Once you have verified that the new pod is running, navigate to `Networking` > `Routes` and click on the `authors-3` route to visit your running application.
+1. Once you have verified that the new pod is running, enter the following command to view the application routes.
 
+```
+oc get routes
+
+NAME    HOST/PORT    PATH    SERVICES    PORT    TERMINATION    WILDCARD
+authors-route    authors-route-default.your-roks-43-1n-cl-2bef1f4b4097001da9502000c44fc2b2-0000.us-south.containers.appdomain.cloud    authors-service    http    None
+authors2    authors2-default.your-roks-43-1n-cl-2bef1f4b4097001da9502000c44fc2b2-0000.us-south.containers.appdomain.cloud    authors2    9080    None
+```
+
+1. Use the route named `authors-3` and append `/openapi/ui` after the `HOST/PORT` value to open the UI, or append `/api/v1/getauthor` to set the API_URL. View the sample below, however, you will have a different route.
+
+```bash
+export API_URL=authors-3-default.osgdcw01-0e3e0ef4c9c6d831e8aa6fe01f33bfc4-0000.sjc04.containers.appdomain.cloud
+```
+
+Then test your application with the command below:
+
+```bash
+curl -X GET "http://$API_URL/api/v1/getauthor" -H "accept: application/json"
+```
+<!-- 
 1. To test out the change we made add the following to the end of your application route:
 
 ```bash
@@ -470,7 +506,7 @@ This will take you to the open API documentation of your app.
 
 1. Click on the rectangle labeled **GET** to expand the api endpoint and then click on **Try it out** on the right side.
 
-1. Enter the name you changed in the `GetAuthor.java` file and click on **Execute**.
+1. Enter the name you changed in the `GetAuthor.java` file and click on **Execute**. -->
 
 You should then see the info that you edited in the file earlier.
 

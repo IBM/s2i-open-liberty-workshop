@@ -27,7 +27,7 @@ parameters:
   - name: SOURCE_REPOSITORY_DIR
     description: The location within the source repo of the application
     displayName: Source Directory
-    value: /sample
+    value: /web-app
     required: true
   - name: OUTPUT_DIR
     description: The location of the compiled binaries from your open liberty builder
@@ -40,6 +40,11 @@ parameters:
     required: true
     from: '[a-zA-Z0-9]{10}'
     generate: expression
+  - name: DOCKER_USERNAME
+    description: The docker username used when tagging images
+    displayName: Docker username
+    required: true
+    value: odrodrig
 message: "... The GitHub webhook secret is ${GITHUB_WEBHOOK_SECRET} ..."
 objects:
 - apiVersion: v1
@@ -61,7 +66,7 @@ objects:
     - name: latest
       from:
         kind: DockerImage
-        name: odrodrig/s2i-open-liberty-builder:0.1.0
+        name: ${DOCKER_USERNAME}/s2i-open-liberty-builder:0.1.0
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -71,7 +76,7 @@ objects:
     - name: latest
       from:
         kind: DockerImage
-        name: odrodrig/s2i-open-liberty:0.1.0
+        name: ${DOCKER_USERNAME}/s2i-open-liberty:0.1.0
 - apiVersion: v1
   kind: BuildConfig
   metadata:
