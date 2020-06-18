@@ -33,6 +33,9 @@ The following prerequisites are needed:
 * [Git CLI](https://git-scm.com/downloads)
 
 ### Setup
+For this lab we will need to use a docker-in-docker environment so that we can build our images. For this scenario we will be using the [IBM Skills Network](https://labs.cognitiveclass.ai/).
+
+1. Follow the instructions [here](./skillsNetwork.md) to create your environment.
 
 1. Clone this repository locally and navigate to the newly cloned directory.
 
@@ -40,6 +43,12 @@ The following prerequisites are needed:
     git clone https://github.com/IBM/s2i-open-liberty-workshop.git -b conference
     cd s2i-open-liberty-workshop
     ```
+
+1. Then we need to install Source to Image. Run the following command to start the installation script.
+
+```bash
+./setup.sh
+```
 
 1. To make things easier, we are going to set some environment variables that we can reuse in later commands.
 
@@ -50,14 +59,7 @@ The following prerequisites are needed:
     export DOCKER_USERNAME=<your-docker-username>
     ```
 
-1. Log in with your OpenShift Cluster.
-  
-   1. Open your `OpenShift web console` and from the profile dropdown `Copy Login Command`.
-   1. Paste the login command to login, e.g.
 
-    ```bash
-    oc login --token=<login-token> --server=https://<cluster-subdomain>:<service-port>
-    ```
 
 ### Build the builder image
 
@@ -177,6 +179,15 @@ In the following steps we will be using two deployment strategies:
 * build and deployment using templates, OpenShift `BuildConfig`, and `DeploymentConfig`.
 
 Now that we have the application running locally and have verified that it works, let's deploy it to an OpenShift environment.
+
+1. Log in with your OpenShift Cluster.
+  
+   1. Open your `OpenShift web console` and from the profile dropdown `Copy Login Command`.
+   1. Paste the login command to login, e.g.
+
+    ```bash
+    oc login --token=<login-token> --server=https://<cluster-subdomain>:<service-port>
+    ```
 
 #### Deploying as a traditional Kubernetes deployment
 
