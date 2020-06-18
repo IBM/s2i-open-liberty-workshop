@@ -37,7 +37,7 @@ The following prerequisites are needed:
 1. Clone this repository locally and navigate to the newly cloned directory.
 
     ```bash
-    git clone https://github.com/IBM/s2i-open-liberty-workshop.git
+    git clone https://github.com/IBM/s2i-open-liberty-workshop.git -b conference
     cd s2i-open-liberty-workshop
     ```
 
