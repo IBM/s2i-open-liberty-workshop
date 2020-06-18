@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: open-liberty-app
+  annotations:
+    tags: java, web app
+    template.openshift.io/provider-display-name: "IBM"
+    description: Just building an open liberty app
+labels:
+  application: open-liberty-app
+parameters:
+  - name: DOCKER_USERNAME
+    description: The docker username used when tagging images
+    displayName: Docker username
+    required: true
+    value: odrodrig
+  - name: DOCKER_REGISTRY
+    description: The docker registry used when tagging images
+    displayName: Docker registry
+    required: true
+    value: docker.io
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: open-liberty-app
+  spec:
+    output:
+      to:
+        kind: DockerImage
+        name: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/authors-runtime:latest
+      pushSecret:
+        name: regcred
+    postCommit: {}
+    resources: {}
+    source:
+      type: Image
+      images:
+        - from:
+            kind: DockerImage
+            name: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/authors-builder:latest
+          paths:
+            - destinationDir: .
+              sourcePath: /tmp/src/
+    strategy:
+      sourceStrategy:
+        from:
+          kind: DockerImage
+          name: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/s2i-open-liberty:0.1.0
+        incremental: false
+    triggers:
+    - type: ConfigChange
+  status:
+    lastVersion: 0
