@@ -185,7 +185,7 @@ For this method, we will deploy our application by creating a kubernetes deploym
 1. Tag the image that was created in the previous section.
 
     ```bash
-    export IMAGE=docker.io/$DOCKER_USERNAME/authors:0.1.0
+    export IMAGE=docker.io/$DOCKER_USERNAME/authors:latest
     echo $IMAGE
     docker tag authors $IMAGE
     ```
@@ -204,6 +204,12 @@ For this method, we will deploy our application by creating a kubernetes deploym
 
 1. Review the `application.yaml` file,
 
+    ```bash
+    cat application.yaml
+    ```
+
+    This command will add your newly pushed authors image to the deployment yaml file.
+  
     ```bash
     sed -i "" "s|APPLICATION_IMAGE|$IMAGE|" application.yaml
     ```
@@ -297,7 +303,7 @@ For this section, you will explore how to build and deploy our application using
     Then, create the build config for our runtime image and start the first build:
 
     ```bash
-    oc process -f runtimeTemplate.yaml -p DOCKER_USERNAME=$DOCKER_USERNAME | oc create -f -
+    oc process -f runtimeTemplate.yaml -p DOCKER_USERNAME=$DOCKER_USERNAME | oc apply -f -
     ```
 
     To take a look at the build status, run:
@@ -402,14 +408,18 @@ In this optional section we will create our own copy of the code push the change
     export REPOSITORY_URL=<repo url>
     ```
 
-1. Then, in your terminal, navigate to a directory where you'd like to clone your repo locally and run the following commands:
+<!-- 1. Then, in your terminal, navigate to a directory where you'd like to clone your repo locally and run the following commands:
 
     ```bash
     git clone $REPOSITORY_URL
     cd s2i-open-liberty-workshop
-    ```
+    ``` -->
 
-1. Now that we have our own copy, let's push a change and test it out. From your browser, navigate to the GitHub repo that you forked and navigate to the file at `web-app/src/main/java/com/ibm/authors/GetAuthor.java`
+
+
+1. Now that we have our own copy, let's push a change and test it out. From your browser, navigate to the GitHub repo that you forked. Click on the **Branch** dropdown and select **conference**. 
+
+1. Then navigate to the file at `web-app/src/main/java/com/ibm/authors/GetAuthor.java`
 
 1. Click on the pencil icon in the upper right of the code to enter editing mode.
 
@@ -432,16 +442,20 @@ In this optional section we will create our own copy of the code push the change
     oc process -f buildTemplate.yaml -p DOCKER_USERNAME=$DOCKER_USERNAME SOURCE_REPOSITORY_URL=$REPOSITORY_URL -p APP_NAME=authors-3 | oc apply -f -
     ```
 
+    ```bash
+    oc start-build open-liberty-builder
+    ```
+
     Ensure that the previous build is finished, then start the runtime build:
 
     ``` bash
-    oc process -f runtimeTemplate.yaml -p DOCKER_USERNAME=$DOCKER_USERNAME -p APP_NAME=authors-3 | oc apply -f -
+    oc start-build open-liberty-app
     ```
 
     Ensure that the runtime image build is finished, then deploy the app with the following command:
 
     ```bash
-    oc new-app --template authors-app -p DOCKER_USERNAME=$DOCKER_USERNAME
+    oc new-app --template authors-app -p DOCKER_USERNAME=$DOCKER_USERNAME -p APP_NAME=authors-3
     ```
 
 1. Once you have verified that the application is deployed and the new pod is running, enter the following command to view the application routes.

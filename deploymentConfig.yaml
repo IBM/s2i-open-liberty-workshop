@@ -47,7 +47,7 @@ objects:
       spec:
         containers:
         - image: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/authors-runtime:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           name: authors-runtime
           ports:
           - containerPort: 9080

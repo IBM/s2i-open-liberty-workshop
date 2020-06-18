@@ -21,16 +21,6 @@ parameters:
     value: docker.io
 objects:
 - apiVersion: v1
-  kind: ImageStream
-  metadata:
-    name: s2i-open-liberty
-  spec:
-    tags:
-    - name: latest
-      from:
-        kind: DockerImage
-        name: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/s2i-open-liberty:0.1.0
-- apiVersion: v1
   kind: BuildConfig
   metadata:
     name: open-liberty-app
@@ -55,15 +45,10 @@ objects:
     strategy:
       sourceStrategy:
         from:
-          kind: ImageStreamTag
-          name: s2i-open-liberty:latest
+          kind: DockerImage
+          name: ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/s2i-open-liberty:0.1.0
         incremental: false
     triggers:
     - type: ConfigChange
-    - type: ImageChange
-      imageChange:
-        from:
-          kind: ImageStreamTag
-          name: authors-builder:0.1.0
   status:
     lastVersion: 0
