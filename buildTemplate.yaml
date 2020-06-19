@@ -12,7 +12,7 @@ parameters:
   - name: SOURCE_REPOSITORY_URL
     description: The source URL for the application
     displayName: Source URL
-    value: "https://github.com/odrodrig/s2i-open-liberty"
+    value: "https://github.com/IBM/s2i-open-liberty-workshop"
     required: true
   - name: APP_NAME
     description: The name of the application that you would like to build.
