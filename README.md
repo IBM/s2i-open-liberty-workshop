@@ -18,21 +18,18 @@ This lab will focus on the second scenario of using a builder image along with a
 ![runtime image flow](./screenshots/runtime-image-flow.png)
 (source: https://github.com/openshift/source-to-image/blob/master/docs/runtime_image.md)
 
-### Structure of this repository
-
-
 ### Prerequisites
 
 The following prerequisites are needed:
 
-* [Docker](https://www.docker.com/products/docker-desktop)
-* [Source to Image CLI](https://github.com/openshift/source-to-image/releases)
 * [A Docker Hub account](https://hub.docker.com)
-* [OpenShift CLI](https://docs.openshift.com/container-platform/4.3/cli_reference/openshift_cli/getting-started-cli.html)
 * [GitHub Account](https://github.com/)
-* [Git CLI](https://git-scm.com/downloads)
+* [IBM Cloud Account](https://cloud.ibm.com/registration)
+* [Have followed these steps to get a cluster](https://github.com/IBM/ddc-cloud-native-security-labs/blob/master/workshop/lab-00/README.md)
+  * You can stop after step 11
 
 ### Setup
+
 For this lab we will need to use a docker-in-docker environment so that we can build our images. For this scenario we will be using the [IBM Skills Network](https://labs.cognitiveclass.ai/).
 
 1. Follow the instructions [here](./skillsNetwork.md) to create your environment.
@@ -47,6 +44,7 @@ For this lab we will need to use a docker-in-docker environment so that we can b
 1. Then we need to install Source to Image. Run the following command to start the installation script.
 
 ```bash
+chmod +x setup.sh
 ./setup.sh
 ```
 
@@ -95,10 +93,15 @@ In this section we will create the first of our two S2I images. This image will 
     docker build -t $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 .
     ```
 
-1. Push the builder image out to Docker hub.
+1. Log in to your Dockerhub account. After running the below command, you will be asked to enter your docker username and password.
 
     ```bash
     docker login
+    ```
+
+1. Push the builder image out to Docker hub.
+
+    ```bash
     docker push $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0
     ```
 
@@ -147,7 +150,7 @@ In this section, we will use S2I to build our application container image and th
 1. Run a multistage S2I build, to build the application.
 
     ```
-    s2i build . $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 authors --runtime-image $DOCKER_USERNAME/s2i-open-liberty:0.1.0 -a /tmp/src/target -a /tmp/src/server.xml
+    ~/s2i/s2i build . $DOCKER_USERNAME/s2i-open-liberty-builder:0.1.0 authors --runtime-image $DOCKER_USERNAME/s2i-open-liberty:0.1.0 -a /tmp/src/target -a /tmp/src/server.xml
     ```
 
     Let's break down the above command:
