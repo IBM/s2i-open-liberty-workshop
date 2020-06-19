@@ -225,7 +225,7 @@ For this method, we will deploy our application by creating a kubernetes deploym
     This command will add your newly pushed authors image to the deployment yaml file.
   
     ```bash
-    sed -i "" "s|APPLICATION_IMAGE|$IMAGE|" application.yaml
+    sed -i "s|APPLICATION_IMAGE|$IMAGE|" application.yaml
     ```
 
 1. Apply the `application.yaml` file using the `oc` cli to create our Deployment, Service, and Route.
@@ -453,7 +453,7 @@ In this optional section we will create our own copy of the code push the change
     Build the builder image:
 
     ``` bash
-    oc process -f buildTemplate.yaml -p DOCKER_USERNAME=$DOCKER_USERNAME SOURCE_REPOSITORY_URL=$REPOSITORY_URL -p APP_NAME=authors-3 | oc apply -f -
+    oc process -f buildTemplate.yaml -p DOCKER_USERNAME=$DOCKER_USERNAME -p SOURCE_REPOSITORY_URL=$REPOSITORY_URL -p APP_NAME=authors-3 | oc apply -f -
     ```
 
     ```bash
