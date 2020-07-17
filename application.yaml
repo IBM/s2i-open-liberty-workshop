@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: authors
-        image: image-registry.openshift-image-registry.svc:5000/default/authors:0.1.0
+        image: APPLICATION_IMAGE
         ports:
         - containerPort: 9080
 ---
