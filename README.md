@@ -48,6 +48,7 @@ The following prerequisites are needed:
     ```bash
     chmod +x ./setup.sh
     ./setup.sh
+    export PATH=$HOME/s2i:$PATH
     ```
 
 1. To make things easier, we are going to set some environment variables that we can reuse in later commands.
