@@ -10,8 +10,12 @@ wget https://github.com/openshift/source-to-image/releases/download/v1.3.0/sourc
 
 tar -zxvf source-to-image-v1.3.0-eed2850f-linux-amd64.tar.gz
 
-cd $HOME
+export PATH=$HOME/s2i:$PATH
 
-echo "export PATH=/home/project/s2i/s2i:$PATH" > .bash_profile
+# echo "export PATH=$HOME/s2i:$PATH" > .bash_profile
 
-source .bash_profile
+# source .bash_profile
+
+echo $PATH
+
+cd /home/project/s2i-open-liberty-workshop
