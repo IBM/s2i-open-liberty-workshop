@@ -41,6 +41,15 @@ The following prerequisites are needed:
     cd s2i-open-liberty-workshop
     ```
 
+1. If you are running this lab in a browser based terminal environment like Skills Network and need to install the Source to Image CLI tool, follow this step:
+
+    1. Run the setup script
+
+    ```bash
+    chmod +x ./setup.sh
+    ./setup.sh
+    ```
+
 1. To make things easier, we are going to set some environment variables that we can reuse in later commands.
 
     **Note**: Replace *Your Username* with your actual docker hub username. If you do not have one, go [here](https://hub.docker.com) to create one.
