@@ -41,6 +41,16 @@ The following prerequisites are needed:
     cd s2i-open-liberty-workshop
     ```
 
+1. If you are running this lab in a browser based terminal environment like Skills Network and need to install the Source to Image CLI tool, follow this step:
+
+    1. Run the setup script
+
+    ```bash
+    chmod +x ./setup.sh
+    ./setup.sh
+    export PATH=$HOME/s2i:$PATH
+    ```
+
 1. To make things easier, we are going to set some environment variables that we can reuse in later commands.
 
     **Note**: Replace *Your Username* with your actual docker hub username. If you do not have one, go [here](https://hub.docker.com) to create one.
@@ -217,7 +227,7 @@ For this method, we will deploy our application by creating a kubernetes deploym
 1. Review the `application.yaml` file,
 
     ```bash
-    sed "s|APPLICATION_IMAGE|$IMAGE|" application.yaml
+    sed -i "s|APPLICATION_IMAGE|$IMAGE|" application.yaml
     cat application.yaml
     ```
 
@@ -236,7 +246,7 @@ For this method, we will deploy our application by creating a kubernetes deploym
 1. Copy and paste the output of the previous command to set a variable $APP_URL,
 
     ```
-    APP_URL=<get-routes-output>
+    export APP_URL=<get-routes-output>
     ```
 
 1. Test the application using curl
@@ -377,15 +387,18 @@ For this section, you will explore how to automate our application build and dep
 
 In this optional section we will explore the option of configuring a webhook that will automatically notify OpenShift of a git push and will kick off the build and deploy process.
 
-1. First we need to create your own version of the code repo by creating a fork. This will copy the repo into your GitHub account. Navigate to the lab repo at https://github.com/odrodrig/s2i-open-liberty and click on the **Fork** button in the upper right of the page.
+1. First we need to create your own version of the code repo by creating a fork. This will copy the repo into your GitHub account. Navigate to the lab repo at https://github.com/IBM/s2i-open-liberty-workshop and click on the **Fork** button in the upper right of the page.
 
 1. When the repo is done forking, click on the green **Clone or download** button and copy your git repo url.
 
-1. Then, in your terminal, navigate to a directory where you'd like to clone your repo locally and run the following command while substituting **repo_url** with the url you copied in the previous step:
+1. Then, in your terminal, navigate to a directory where you'd like to clone your repo locally and run the following commands while substituting **<repo_url>** with the url you copied in the previous step:
 
     ```bash
-    git clone repo_url
-    cd s2i-open-liberty
+    cd /home/project
+    mkdir clone
+    cd clone
+    git clone <repo_url>
+    cd s2i-open-liberty-workshop/
     ```
 
 1. First let's delete the application that we deployed earlier. Run the following script:
