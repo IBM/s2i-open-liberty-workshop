@@ -35,11 +35,11 @@ RUN curl -fL -o /openjdk.tgz "$JAVA_URL" && \
 
 RUN mkdir /home/default && \
     cd /home/default && \
-    curl -O http://mirror.cc.columbia.edu/pub/software/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz && \
-    tar xzvf apache-maven-3.6.3-bin.tar.gz && \
-    rm apache-maven-3.6.3-bin.tar.gz
+    curl -O https://dlcdn.apache.org/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz && \
+    tar xzvf apache-maven-3.9.5-bin.tar.gz && \
+    rm apache-maven-3.9.5-bin.tar.gz
 
-ENV PATH="/home/default/apache-maven-3.6.3/bin:$PATH" \
+ENV PATH="/home/default/apache-maven-3.9.5/bin:$PATH" \
     STI_SCRIPTS_PATH="/usr/local/s2i" \ 
     WORKDIR="/usr/local/workdir" \
     S2I_DESTINATION="/tmp" 
